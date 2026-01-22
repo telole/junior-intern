@@ -5,4 +5,5 @@
 - GORM (ORM)
 - PostgreSQL (UUID, relational schema)
 
-<img width="703" height="718" alt="image" src="https://github.com/user-attachments/assets/42663290-31b1-439b-916b-9d7ff3536e48" />
+<img width="503" height="518" alt="image" src="https://github.com/user-attachments/assets/42663290-31b1-439b-916b-9d7ff3536e48" />
+
