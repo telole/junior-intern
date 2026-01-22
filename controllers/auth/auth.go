@@ -3,8 +3,10 @@ package auth
 import (
 	"backend/models"
 	"backend/res/request"
-	"golang.org/x/crypto/bcrypt"
+	"backend/res/utils"
+
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 type AuthController struct { 
@@ -40,11 +42,49 @@ func (a *AuthController) Register(c echo.Context) error {
 		Password: string(hashed),
 		IsActive: true,
 	}
+	token, err := utils.GenerateToken(user.ID, user.Email, user.TenantID)
+	if err != nil {
+		return c.JSON(500, echo.Map{"error" : "failed to generate token"})
+	}
+
+
 
 	if err := a.DB.Create(&user).Error; err != nil { 
 		return c.JSON(500, echo.Map{"error" : "failed to create user"})
 	}
 
-	return c.JSON(201, echo.Map{"message" : "user created successfully", "user" : user})
+	return c.JSON(201, echo.Map{"message" : "user created successfully", 
+	"token" : token,
+	"user" : user})
 }
-	
+
+func (a *AuthController) Login(c echo.Context) error {
+	req := new(request.LoginRequest)
+
+	if err := c.Bind(req); err != nil {
+		return c.JSON(400, echo.Map{"error": "invalid request"})
+	}
+
+	var user models.User
+	if err := a.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		return c.JSON(400, echo.Map{"error": "invalid credentials"})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.JSON(400, echo.Map{"error": "invalid credentials"})
+	}
+
+	token, err := utils.GenerateToken(user.ID, user.TenantID, user.Email)
+
+	if err != nil {
+		return c.JSON(500, echo.Map{"error": "failed to generate token"})
+	}
+
+	return c.JSON(200, echo.Map{"message": "login successful", 
+	"token" : token,
+	"user": user})
+}
+
+func (a *AuthController) Logout(c echo.Context) error {
+	return c.JSON(200, echo.Map{"message": "logout successful"})
+}

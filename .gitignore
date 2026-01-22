@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Air hot reload
+.air.toml
+tmp/
+
+# Go build
+*.exe
+*.out
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
