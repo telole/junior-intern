@@ -42,7 +42,7 @@ func (a *AuthController) Register(c echo.Context) error {
 		Password: string(hashed),
 		IsActive: true,
 	}
-	token, err := utils.GenerateToken(user.ID, user.Email, user.TenantID)
+	token, err := utils.GenerateToken(user.ID, user.TenantID, user.Email)
 	if err != nil {
 		return c.JSON(500, echo.Map{"error" : "failed to generate token"})
 	}

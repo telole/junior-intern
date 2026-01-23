@@ -2,6 +2,7 @@ package middleware
 
 import (
 	// "backend/res/utils"
+	"backend/res/utils"
 	"fmt"
 	// "net/http"
 	"os"
@@ -23,22 +24,43 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(401, echo.Map{"error": "Invalid token format"})
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method")
-			}
-			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
+		// token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		// 		return nil, fmt.Errorf("unexpected signing method")
+		// 	}
+		// 	return []byte(os.Getenv("JWT_SECRET")), nil
+		// })
+
+		// if err != nil || !token.Valid {
+		// 	return c.JSON(401, echo.Map{"error": "Invalid token"})
+		// }
+
+		claims := &utils.JwtCustomClaims{}
+
+		token, err := jwt.ParseWithClaims(
+			tokenString,
+			claims,
+			func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method")
+				}
+				return []byte(os.Getenv("JWT_SECRET")), nil
+			},
+		)
 
 		if err != nil || !token.Valid {
 			return c.JSON(401, echo.Map{"error": "Invalid token"})
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
+		c.Set("user_id", claims.UserID)
+		c.Set("tenant_id", claims.TenantID)
 
-		userID := uint(claims["user_id"].(float64))
-		c.Set("user_id", userID)
+
+		fmt.Println("AUTH HEADER:", c.Request().Header.Get("Authorization"))
+		fmt.Println("METHOD:", c.Request().Method)
+		fmt.Println("PATH:", c.Path())
 
 		return next(c)
+
 	}
 }
