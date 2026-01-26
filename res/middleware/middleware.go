@@ -54,6 +54,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		c.Set("user_id", claims.UserID)
 		c.Set("tenant_id", claims.TenantID)
+		c.Set("role", claims.Role)
 
 
 		fmt.Println("AUTH HEADER:", c.Request().Header.Get("Authorization"))

@@ -11,30 +11,34 @@ import (
 )
 
 func InitRoutes(e *echo.Echo, db *gorm.DB) {
-	//definisi Controller
 	authController := &auth.AuthController{DB: db}
 	profileController := &profile.ProfileController{DB: db}
 	ticketController := &tickets.TicketController{DB: db}
 
-	//AuthController Routes
-	auth := e.Group("/auth") 
-	auth.POST("/register", authController.Register)
-	auth.POST("/login", authController.Login)
+	authGroup := e.Group("/auth")
+	authGroup.POST("/register", authController.Register)
+	authGroup.POST("/login", authController.Login)
 
-	authProtected := e.Group("/auth", middleware.AuthMiddleware)
+	authProtected := e.Group("/auth")
+	authProtected.Use(middleware.AuthMiddleware)
 	authProtected.POST("/logout", authController.Logout)
 
+	api := e.Group("/api")
+	api.Use(middleware.AuthMiddleware)
 
-	api := e.Group("/api", middleware.AuthMiddleware)
 	api.GET("/me", profileController.GetProfile)
 
-	ticket := api.Group("/tickets")
-	{
-		ticket.POST("", ticketController.CreateTicket)
-		ticket.GET("", ticketController.GetTickets)
-		ticket.GET("/:id", ticketController.GetTicketByID)
-		ticket.PUT("/:id/status", ticketController.UpdateTicketStatus)
-		// ticket.DELETE("/:id", ticketController.DeleteTicket)
-	}
+	tickets := api.Group("/tickets")
+	tickets.POST("", ticketController.CreateTicket)
+	tickets.GET("", ticketController.GetTickets)
+	tickets.GET("/:id", ticketController.GetTicketByID)
+	tickets.PUT("/:id/status", ticketController.UpdateTicketStatus, middleware.AdminMiddleware)
+
+	admin := e.Group("/api/admin")
+	admin.Use(middleware.AuthMiddleware)
+	admin.Use(middleware.AdminMiddleware)
+
+	superAdmin := e.Group("/api/superadmin")
+	superAdmin.Use(middleware.AuthMiddleware)
+	superAdmin.Use(middleware.SuperAdminMiddleware)
 }
-	
